@@ -30,7 +30,7 @@ resource "aws_vpc" "vpc1" {
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
-    Name = "tf-vpc"
+    Name = join("-", ["terraform", var.project-name])
   }
 }
 
@@ -63,19 +63,14 @@ resource "aws_security_group" "sg1" {
   name        = "sg1"
   description = "Allow TCP/80 & TCP/22"
   vpc_id      = aws_vpc.vpc1.id
-  ingress {
-    description = "allow inbound ssh"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    description = "allow inbound http"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "ingress" {
+    for_each = var.rules
+    content {
+      from_port   = ingress.value["port"]
+      to_port     = ingress.value["port"]
+      protocol    = ingress.value["protocol"]
+      cidr_blocks = ingress.value["cidr_blocks"]
+    }
   }
   egress {
     description = "allow outbound all"
