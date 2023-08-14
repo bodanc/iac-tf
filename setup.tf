@@ -19,7 +19,7 @@ data "aws_route_table" "main_route_table" {
   }
 }
 
-# get Linux AMI ID using SSM parameter endpoint from us-east-1
+# get Linux AMI ID using SSM parameter endpoint
 data "aws_ssm_parameter" "ami-web" {
   name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 }
@@ -34,6 +34,19 @@ resource "aws_vpc" "vpc1" {
   }
 }
 
+# create subnet in the 1st VPC AZ returned (element 0 in AZ list)
+resource "aws_subnet" "sub1" {
+  vpc_id            = aws_vpc.vpc1.id
+  availability_zone = element(data.aws_availability_zones.azs.names, 0)
+  cidr_block        = "10.0.1.0/24"
+}
+
+# create IGW
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.vpc1.id
+}
+
+# create a route table for internet access via IGW above
 resource "aws_default_route_table" "route_internet" {
   default_route_table_id = data.aws_route_table.main_route_table.id
   route {
@@ -43,18 +56,6 @@ resource "aws_default_route_table" "route_internet" {
   tags = {
     Name = "tf-default-route-table-to-internet"
   }
-}
-
-# IGW
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.vpc1.id
-}
-
-# create subnet in the 1st VPC AZ returned (element 0 in AZ list)
-resource "aws_subnet" "sub1" {
-  vpc_id            = aws_vpc.vpc1.id
-  availability_zone = element(data.aws_availability_zones.azs.names, 0)
-  cidr_block        = "10.0.1.0/24"
 }
 
 # create Security Group to allow n/w traffic on TCP/22 & TCP/80
