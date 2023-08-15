@@ -7,7 +7,7 @@ data "aws_availability_zones" "azs" {
   state = "available"
 }
 
-# retrieve the VPC's main route table to modify
+# retrieve VPC main route table to modify
 data "aws_route_table" "main_route_table" {
   filter {
     name   = "vpc-id"
